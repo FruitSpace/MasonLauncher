@@ -2,6 +2,8 @@ package main
 
 import (
 	"archive/zip"
+	"crypto/md5"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -144,4 +146,14 @@ func CacheIcon(url string, iconEtag string) error {
 	err:=DownloadFile(url,basePath+"/cache/"+icon)
 	DownloadingNow = make(chan int64)
 	return err
+}
+
+func CalculateMD5(filepath string) (string, error) {
+	f, err := os.Open(filepath)
+    if err!= nil {return "", err}
+    defer f.Close()
+    h := md5.New()
+    _, err = io.Copy(h, f)
+	if err!= nil {return "", err}
+	return fmt.Sprintf("%x",h.Sum(nil)), nil
 }

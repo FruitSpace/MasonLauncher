@@ -35,7 +35,7 @@ func LoadServerInfo(srvid string) (Server, error) {
 }
 
 func (s Server) GetUrl() string {
-	return "http://"+s.Region+"gd.gofruit.space/"+s.SrvId+"/db/"
+	return "http://"+s.Region+"gd.gofruit.space/"+s.SrvId+"/db"
 }
 
 
@@ -52,10 +52,11 @@ func (rp RePatcher) DownloadPureGD() ([]byte, error){
 
 // PatchPureGD url is http://XXX/db/
 func (rp RePatcher) PatchPureGD(url string, gd []byte) []byte{
-	gd=bytes.ReplaceAll(gd, []byte("http://www.boomlings.com/database/"), []byte(url))
+	gd=bytes.ReplaceAll(gd, []byte("http://www.boomlings.com/database"), []byte(url))
 	encoded:=base64.StdEncoding.EncodeToString([]byte(url))
 	encoded=MinifyBase64(encoded)
-	gd=bytes.ReplaceAll(gd, []byte("aHR0cDovL3d3dy5ib29tbGluZ3MuY29tL2RhdGFiYXNlL3"), []byte(encoded))
+	gd=bytes.ReplaceAll(gd, []byte("aHR0cDovL3d3dy5ib29tbGluZ3MuY29tL2RhdGFiYXNl"), []byte(encoded))
+	fmt.Println("aHR0cDovL3d3dy5ib29tbGluZ3MuY29tL2RhdGFiYXNl ->",encoded)
 	return gd
 }
 

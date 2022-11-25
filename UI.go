@@ -22,7 +22,7 @@ func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS Server) f
 	// Make Card --- V(H(img, V(text, text)), btn)
 
 	currentYear:=strconv.Itoa(time.Now().Year())
-	copyright:=canvas.NewText("© "+currentYear+" Fruitspace", color.Gray16{Y: 0xaaaf})
+	copyright:=canvas.NewText("GhostLauncher v"+Version+" © "+currentYear+" Fruitspace", color.Gray16{Y: 0xaaaf})
 	copyright.TextSize=10
 	copyright.Alignment=fyne.TextAlignCenter
 
@@ -108,6 +108,13 @@ func InstallGD(GDPS Server, progressBar *widget.ProgressBar, basePath, pwd strin
 	DownloadingNow=make(chan int64)
 	fmt.Sprintln("Set 0")
 
+	// Verify Dlls size
+	dllSizeLocal,err:=GetFileSize(basePath+"/gdps_dlls.zip")
+	if err!=nil || int(dllSizeLocal)!=dllSize {
+		dialog.ShowConfirm("Ошибка", "Не удалось загрузить библиотеки. Попробуйте еще раз", func(b bool) {os.Exit(1)}, w)
+		return
+	}
+
 	// Download Textures
 	progressBar.TextFormatter = func() string {
 		return fmt.Sprintf("Загружаем текстурпак... (%.2f%%)", progressBar.Value)
@@ -121,6 +128,13 @@ func InstallGD(GDPS Server, progressBar *widget.ProgressBar, basePath, pwd strin
 	time.Sleep(time.Millisecond*200)
 	progressBar.SetValue(0)
 	DownloadingNow=make(chan int64)
+
+	// Verify Dlls size
+	texturesSizeLocal,err:=GetFileSize(basePath+"/gdps_textures.zip")
+	if err!=nil || int(texturesSizeLocal)!=texturesSize {
+		dialog.ShowConfirm("Ошибка", "Не удалось загрузить текстуры. Попробуйте еще раз", func(b bool) {os.Exit(1)}, w)
+		return
+	}
 
 	// Unpack all
 	progressBar.TextFormatter = func() string {return "Распаковываем файлы..."}
@@ -195,10 +209,17 @@ func NewMainPage(win fyne.Window, basePath string, pwd string) fyne.CanvasObject
 		SrvId: LockFile.SrvId,
 		Name: LockFile.Title,
 	}
-	desc:="Добро пожаловатьdd"
+	desc:="Добро пожаловать!"
+	stat:="Офлайн режим"
+	manager:=SaveManager{}
+	xerr:=manager.Open(GDPS.Name)
+	if xerr==nil {
+		uname:=manager.GetUname()
+		desc="Добро пожаловать, "+uname+"!"
+	}
 	if inetErr == nil {
 		GDPS,_= LoadServerInfo(LockFile.SrvId)
-		desc=fmt.Sprintf("Игроков: %d,   Уровней: %d", GDPS.Players, GDPS.Levels)
+		stat=fmt.Sprintf("Игроков: %d,   Уровней: %d", GDPS.Players, GDPS.Levels)
 		_, etag, err:= GetWebFileInfo("https://cdn.fruitspace.one/assets/GhostLauncher.exe")
 		if err==nil && LockFile.LauncherEtag!=etag {
 			SelfUpdate()
@@ -210,17 +231,20 @@ func NewMainPage(win fyne.Window, basePath string, pwd string) fyne.CanvasObject
 	win.SetTitle("GhostLauncher - "+GDPS.Name)
 
 	currentYear:=strconv.Itoa(time.Now().Year())
-	copyright:=canvas.NewText("© "+currentYear+" Fruitspace", color.Gray16{Y: 0xaaaf})
+	copyright:=canvas.NewText("GhostLauncher v"+Version+" © "+currentYear+" Fruitspace", color.Gray16{Y: 0xaaaf})
 	copyright.TextSize=10
 	copyright.Alignment=fyne.TextAlignCenter
 
 	title:=canvas.NewText(GDPS.Name, color.White)
 	title.TextSize=20
+	xstat:=canvas.NewText(stat, color.White)
+	xstat.TextSize=10
 	DataCard:= container.NewVBox(
 		title,
 		canvas.NewText(
 			desc,
 			color.White),
+		xstat,
 	)
 
 	logo := &canvas.Image{}
@@ -239,7 +263,7 @@ func NewMainPage(win fyne.Window, basePath string, pwd string) fyne.CanvasObject
 	)
 
 	installBtn:=widget.NewButtonWithIcon("Запустить", theme.MediaPlayIcon(), func() {
-		StartBinaryDetached(pwd+"/"+GDPS.Name+"/"+GDPS.Name+".exe")
+		StartBinaryDetached(pwd+"/"+GDPS.Name+".exe")
 		os.Exit(0)
 	})
 	Pane:= container.NewCenter(container.NewVBox(Card, installBtn))

@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/dialog"
 	"os"
+	"strings"
 )
 
 //go:embed assets
@@ -13,12 +14,16 @@ var assets embed.FS
 
 var LockFile = Lock{}
 
-const (
+var (
 	SrvId = "000S"
+	Version = "0.4"
 )
 
 
 func main()	{
+	if len(os.Args)>1 && strings.HasPrefix(os.Args[1],"-repatch:") {
+		SrvId = strings.Split(os.Args[1],":")[1]
+	}
 	goApp := app.New()
 	goApp.SetIcon(fyne.NewStaticResource("icon.png", GetIcon()))
 	win := goApp.NewWindow("GhostLauncher")
