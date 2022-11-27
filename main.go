@@ -1,3 +1,4 @@
+//go:generate /Users/m41den/go/bin/goversioninfo.exe -icon=geometrydash.ico -company=Fruitspace -64
 package main
 
 import (
