@@ -62,6 +62,8 @@ func (rp RePatcher) DownloadPureGD() ([]byte, error) {
 // PatchPureGD url is http://XXX/db/
 func (rp RePatcher) PatchPureGD(url string, gd []byte) []byte {
 	gd = bytes.ReplaceAll(gd, []byte("http://www.boomlings.com/database"), []byte(url))
+	gd = bytes.ReplaceAll(gd, []byte("RobTop Support for more info"), []byte("Fruitspace Support for help."))
+	gd = bytes.ReplaceAll(gd, []byte("Something went wrong\nplease try again later"), []byte("Nothing here yet :/ \nmaybe try again later?"))
 	encoded := base64.StdEncoding.EncodeToString([]byte(url))
 	encoded = MinifyBase64(encoded)
 	gd = bytes.ReplaceAll(gd, []byte("aHR0cDovL3d3dy5ib29tbGluZ3MuY29tL2RhdGFiYXNl"), []byte(encoded))

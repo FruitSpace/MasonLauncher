@@ -9,11 +9,87 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"image/color"
+	"net/url"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 )
+
+func helpScreenDialog(win fyne.Window) {
+	subClr := color.Gray16{Y: 0xaaaf}
+	msvcUrl, _ := url.Parse("https://files.catbox.moe/bdwtei.zip")
+	discordUrl, _ := url.Parse("https://discord.gg/fruitspace")
+
+	//open appdata/local in explorer
+	openAppData := func() {
+		pwd, _ := os.UserCacheDir()
+		err := exec.Command("explorer.exe", pwd).Start()
+		if err != nil {
+			dialog.ShowError(err, win)
+		}
+	}
+
+	infoAccordion := widget.NewAccordion(
+		widget.NewAccordionItem(
+			"Лаунчер выдает при запуске ошибку с длинной ссылкой",
+			container.NewVBox(
+				canvas.NewText("Используйте системный VPN во время установки (например iTop VPN, не реклама).", subClr),
+				canvas.NewText("Не забудьте выключить его после установки", subClr),
+			),
+		),
+
+		widget.NewAccordionItem(
+			"Geometry Dash выдает ошибку 0x00000142 или похожую",
+			container.NewVBox(
+				canvas.NewText("Путь к приватному серверу содержит русские символы. Вы можете перенести папку", subClr),
+				canvas.NewText("в C:/Games (обязательно диск C:), чтобы в пути были только английские символы", subClr),
+			),
+		),
+
+		widget.NewAccordionItem(
+			"Geometry Dash выдает ошибку \"MSVCP140.dll not found\" или похожую",
+			container.NewVBox(
+				canvas.NewText("Вам требуется установить MSVC (Microsoft Visual C++ Redistributable)", subClr),
+				canvas.NewText("Мы собрали для вас архив со всем необходимым: установите оттуда все 4 файла", subClr),
+				widget.NewHyperlink("https://files.catbox.moe/bdwtei.zip", msvcUrl),
+			),
+		),
+
+		widget.NewAccordionItem(
+			"Geometry Dash не запускается вообще (и не отображает ошибку)",
+			container.NewVBox(
+				canvas.NewText("1) Убедитесь, что игра находится на диске C:", subClr),
+				canvas.NewText("2) Если не помогло, то попробуйте удалить сохранения: нажмите на кнопку ниже и удалите папку с названием", subClr),
+				canvas.NewText("    вашего GDPS. Это баг самого Geometry Dash и альтернативы нет :(", subClr),
+				widget.NewButton("Открыть папку", openAppData),
+			),
+		),
+
+		widget.NewAccordionItem(
+			"Я установил MegaHack v7, но вижу ошибку Themida - An error has occurred... wrong DLL present.",
+			container.NewVBox(
+				canvas.NewText("Приватные сервера не поддерживают мегахак, но некоторый пользователи сообщали о рабочем способе:", subClr),
+				canvas.NewText("1) Перенесите файл приватного сервера (ИмяGDPS.exe) в папку офиц. GD из Steam", subClr),
+				canvas.NewText("2) Если в той папке нет файла \"steam_appid.txt\", то создайте его и поместите в него 322170", subClr),
+			),
+		),
+
+		widget.NewAccordionItem(
+			"Ничего не помогло",
+			container.NewVBox(
+				canvas.NewText("И такое тоже бывает. Присоединятесь к нашему Discord-серверу и открывайте там тикет - мы обязательно поможем!", subClr),
+				widget.NewHyperlink("https://discord.gg/fruitspace", discordUrl),
+			),
+		),
+	)
+
+	dialog.ShowCustom("Помощь", "Закрыть", container.NewVBox(
+		canvas.NewText("Если у вас возникают проблемы при запуске Geometry Dash, то попробуйте следующие решения:", color.White),
+		infoAccordion,
+	), win)
+}
 
 func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS Server) fyne.CanvasObject {
 	downBar := widget.NewProgressBar()
@@ -61,7 +137,19 @@ func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS Server) f
 	installBtn := widget.NewButtonWithIcon("Установить", theme.DownloadIcon(), func() {
 		go InstallGD(GDPS, downBar, basePath, pwd, win)
 	})
-	Pane := container.NewCenter(container.NewVBox(Card, installBtn))
+	helpBtn := widget.NewButtonWithIcon("", theme.HelpIcon(), func() {
+		go helpScreenDialog(win)
+	})
+
+	ActionBox := container.NewBorder(nil, nil, nil,
+
+		helpBtn,
+		installBtn,
+	)
+	Pane := container.NewCenter(container.NewVBox(
+		Card,
+		ActionBox,
+	))
 	return container.NewBorder(copyright, downBar, nil, nil, Pane)
 }
 

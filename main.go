@@ -18,7 +18,7 @@ var LockFile = Lock{}
 
 var (
 	SrvId   = "000S"
-	Version = "0.5b"
+	Version = "0.5c"
 )
 
 func main() {
@@ -50,7 +50,9 @@ func main() {
 		// GD is not installed
 		GDPS, err := LoadServerInfo(SrvId)
 		if err != nil {
-			dialog.ShowConfirm("Ошибка", err.Error(), func(b bool) { os.Exit(1) }, win)
+			dialog.ShowConfirm("Ошибка", err.Error(), func(b bool) {
+				GDPS.Name = "Ошибка"
+			}, win)
 			win.ShowAndRun()
 		}
 		// Server is found
