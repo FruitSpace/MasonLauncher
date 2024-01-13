@@ -9,15 +9,15 @@
   "StringFileInfo": {
     "Comments": "GhostLauncher",
     "CompanyName": "FruitSpace",
-    "FileDescription": "This is a launcher/installer for FruitSpace GDPS",
-    "FileVersion": "v1.0.0.0",
+    "FileDescription": "This is an installer for FruitSpace GDPS",
+    "FileVersion": "v1.0.8.0",
     "InternalName": "GhostLauncher.exe",
     "LegalCopyright": "Copyright (c) FruitSpace",
     "LegalTrademarks": "",
     "OriginalFilename": "main.go",
-    "PrivateBuild": "",
+    "PrivateBuild": "v1.0.8.0",
     "ProductName": "GhostLauncher",
-    "ProductVersion": "v1.0.0.0",
-    "SpecialBuild": ""
+    "ProductVersion": "v1.0.8.0",
+    "SpecialBuild": "v1.0.8.0"
   }
 }

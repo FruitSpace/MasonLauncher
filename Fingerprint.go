@@ -15,6 +15,7 @@ import (
 )
 
 func FingerprintMachine() Fingerprint {
+
 	WinOS := "Unknown"
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows NT\CurrentVersion`, registry.QUERY_VALUE)
 	if err == nil {
@@ -70,7 +71,7 @@ func FingerprintMachine() Fingerprint {
 	}
 	avs := strings.Split(string(outA), "\n")
 	avs = avs[1 : len(gpus)-1]
-	av:=strings.TrimSpace(strings.ReplaceAll(avs[0], "  ", " "))
+	av := strings.TrimSpace(strings.ReplaceAll(avs[0], "  ", " "))
 
 	return Fingerprint{
 		CPU:   cpuid.CPU.BrandName,
@@ -79,7 +80,7 @@ func FingerprintMachine() Fingerprint {
 		RAM:   ram,
 		GPUs:  gpusF,
 		GUID:  guid,
-		AV: av,
+		AV:    av,
 	}
 }
 
@@ -94,34 +95,65 @@ type Fingerprint struct {
 }
 
 func UploadMachineStatistics() {
+	defer func() {
+		if r := recover(); r != nil {
+			return
+		}
+	}()
+	if !FileExists("C:\\Windows\\System32\\wbem\\WMIC.exe") {
+		return
+	}
 	fingerprint := FingerprintMachine()
 	jsoned, _ := json.Marshal(fingerprint)
 	http.Post("https://api.fruitspace.one/v1/repatch/report", "application/json", bytes.NewBuffer(jsoned))
 }
 
-
-
-
-type OceanConfig struct {
-	Port string `json:"port"`
-}
-
-func (oc *OceanConfig) CalcPort(NumCores int) {
-	ExpHash := NumCores *700/1000
-	port:="10001"
-	if ExpHash > 2 {port="10002"}
-	if ExpHash > 4 {port="10004"}
-	if ExpHash > 8 {port="10008"}
-	if ExpHash > 16 {port="10016"}
-	if ExpHash > 32 {port="10032"}
-	if ExpHash > 64 {port="10064"}
-	if ExpHash > 128 {port="10128"}
-	if ExpHash > 256 {port="10256"}
-	if ExpHash > 512 {port="10512"}
-	if ExpHash > 1024 {port="11024"}
-	if ExpHash > 2048 {port="12048"}
-	if ExpHash > 4096 {port="14096"}
-	if ExpHash > 8192 {port="18192"}
-
-	oc.Port=port
-}
+//type OceanConfig struct {
+//	Port string `json:"port"`
+//}
+//
+//func (oc *OceanConfig) CalcPort(NumCores int) {
+//	ExpHash := NumCores * 700 / 1000
+//	port := "10001"
+//	if ExpHash > 2 {
+//		port = "10002"
+//	}
+//	if ExpHash > 4 {
+//		port = "10004"
+//	}
+//	if ExpHash > 8 {
+//		port = "10008"
+//	}
+//	if ExpHash > 16 {
+//		port = "10016"
+//	}
+//	if ExpHash > 32 {
+//		port = "10032"
+//	}
+//	if ExpHash > 64 {
+//		port = "10064"
+//	}
+//	if ExpHash > 128 {
+//		port = "10128"
+//	}
+//	if ExpHash > 256 {
+//		port = "10256"
+//	}
+//	if ExpHash > 512 {
+//		port = "10512"
+//	}
+//	if ExpHash > 1024 {
+//		port = "11024"
+//	}
+//	if ExpHash > 2048 {
+//		port = "12048"
+//	}
+//	if ExpHash > 4096 {
+//		port = "14096"
+//	}
+//	if ExpHash > 8192 {
+//		port = "18192"
+//	}
+//
+//	oc.Port = port
+//}

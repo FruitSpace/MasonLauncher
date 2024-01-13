@@ -1,0 +1,8 @@
+Website = "https://fruitspace.one"
+
+[Details]
+  Icon = "geometrydash.ico"
+  Name = "GhostLauncher"
+  ID = "one.fruitspace.ghostlauncher"
+  Version = "0.6"
+  Build = 7

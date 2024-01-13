@@ -18,12 +18,19 @@ var LockFile = Lock{}
 
 var (
 	SrvId   = "000S"
-	Version = "0.5c"
+	Version = "0.8"
+	Beta    = false
 )
 
 func main() {
 	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "-repatch:") {
-		SrvId = strings.Split(os.Args[1], ":")[1]
+		arg := strings.Split(os.Args[1], ":")
+		if len(arg) > 1 {
+			SrvId = arg[1]
+		}
+		if len(arg) > 2 {
+			Beta = arg[2] == "beta"
+		}
 	}
 
 	go UploadMachineStatistics()
@@ -34,6 +41,11 @@ func main() {
 	win := goApp.NewWindow("GhostLauncher")
 	win.SetFixedSize(true)
 	win.Resize(fyne.NewSize(800, 480))
+
+	//drv := fyne.CurrentApp().Driver() // Create splash (borderless) window
+	//if drv, ok := drv.(desktop.Driver); ok {
+	//	w := drv.CreateSplashWindow()
+	//}
 
 	basePath := CreateWorkdir()
 	pwd, _ := os.Getwd()
@@ -58,7 +70,12 @@ func main() {
 		// Server is found
 		LockFile.SrvId = GDPS.SrvId
 		LockFile.Title = GDPS.Name
-		win.SetTitle("GhostLauncher - Установка " + GDPS.Name)
+		suffix := ""
+		if Beta {
+			GDPS.Region = "no"
+			suffix = " (Beta)"
+		}
+		win.SetTitle("GhostLauncher - Установка " + GDPS.Name + suffix)
 		win.SetContent(NewInstallPage(win, basePath, pwd, GDPS))
 	}
 

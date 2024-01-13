@@ -23,6 +23,17 @@ type Server struct {
 	Region      string `json:"region"`
 }
 
+var ImmutableURL = func(rot int) (string, func() string, []byte) {
+	pre := "http://www."
+	data := struct {
+		Sound string
+		Name  []byte
+		Data  string
+		Base  []byte
+	}{"boom", []byte("lings"), "data", []byte("base")}
+	return pre + data.Sound, func() string { return string(data.Name) + ".com/" + data.Data }, data.Base
+}
+
 func LoadServerInfo(srvid string) (Server, error) {
 	r, err := http.Get("https://api.fruitspace.one/v1/repatch/getserverinfo?id=" + srvid)
 	if err != nil {
@@ -47,6 +58,7 @@ func (s Server) GetUrl() string {
 type RePatcher struct{}
 
 func (rp RePatcher) DownloadPureGD() ([]byte, error) {
+	//resp, err := http.Get("")
 	resp, err := http.Get("https://cdn.fruitspace.one/assets/GeometryDash.exe")
 	if err != nil {
 		return nil, err
@@ -61,7 +73,8 @@ func (rp RePatcher) DownloadPureGD() ([]byte, error) {
 
 // PatchPureGD url is http://XXX/db/
 func (rp RePatcher) PatchPureGD(url string, gd []byte) []byte {
-	gd = bytes.ReplaceAll(gd, []byte("http://www.boomlings.com/database"), []byte(url))
+	f, s, t := ImmutableURL(15)
+	gd = bytes.ReplaceAll(gd, []byte(f+s()+string(t)), []byte(url))
 	gd = bytes.ReplaceAll(gd, []byte("RobTop Support for more info"), []byte("Fruitspace Support for help."))
 	gd = bytes.ReplaceAll(gd, []byte("Something went wrong\nplease try again later"), []byte("Nothing here yet :/ \nmaybe try again later?"))
 	encoded := base64.StdEncoding.EncodeToString([]byte(url))
