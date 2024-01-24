@@ -3,42 +3,68 @@ module GhostPatcher
 go 1.18
 
 require (
-	fyne.io/fyne/v2 v2.3.3
-	github.com/jeandeaual/go-locale v0.0.0-20220711133428-7de61946b173
-	github.com/klauspost/cpuid/v2 v2.2.4
+	fyne.io/fyne/v2 v2.4.3
+	github.com/fyne-io/terminal v0.0.0-20240118213819-35e2bb2fbc45
+	github.com/klauspost/cpuid/v2 v2.2.6
+	github.com/m41denx/particle v0.0.0-20240123223616-7e3dc1b65308
 	github.com/minio/selfupdate v0.6.0
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
-	golang.org/x/sys v0.7.0
+	golang.org/x/sys v0.16.0
 )
 
 require (
-	aead.dev/minisign v0.2.0 // indirect
-	fyne.io/systray v1.10.1-0.20230312215936-7f71b037e260 // indirect
-	github.com/benoitkugler/textlayout v0.3.0 // indirect
+	aead.dev/minisign v0.2.1 // indirect
+	fyne.io/systray v1.10.1-0.20231115130155-104f5ef7839e // indirect
+	github.com/ActiveState/termtest/conpty v0.5.0 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
+	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/bodgit/plumbing v1.3.0 // indirect
+	github.com/bodgit/sevenzip v1.4.5 // indirect
+	github.com/bodgit/windows v1.0.1 // indirect
+	github.com/creack/pty v1.1.21 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fredbi/uri v1.0.0 // indirect
-	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/fyne-io/gl-js v0.0.0-20220802150000-8e339395f381 // indirect
-	github.com/fyne-io/glfw-js v0.0.0-20220517201726-bebc2019cd33 // indirect
-	github.com/fyne-io/image v0.0.0-20221020213044-f609c6a24345 // indirect
-	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6 // indirect
-	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20221017161538-93cebf72946b // indirect
-	github.com/go-text/typesetting v0.0.0-20230405155246-bf9c697c6e16 // indirect
+	github.com/fatih/color v1.16.0 // indirect
+	github.com/fredbi/uri v1.1.0 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fyne-io/gl-js v0.0.0-20230506162202-1fdaa286a934 // indirect
+	github.com/fyne-io/glfw-js v0.0.0-20240101223322-6e1efdc71b7a // indirect
+	github.com/fyne-io/image v0.0.0-20240121103648-c3c798e60e6b // indirect
+	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240118000515-a250818d05e3 // indirect
+	github.com/go-text/render v0.0.0-20240122202426-67aad72d5803 // indirect
+	github.com/go-text/typesetting v0.1.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/goki/freetype v1.0.1 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
-	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
+	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
-	github.com/stretchr/testify v1.8.2 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/tevino/abool v1.2.0 // indirect
-	github.com/yuin/goldmark v1.5.4 // indirect
-	golang.org/x/crypto v0.8.0 // indirect
-	golang.org/x/image v0.7.0 // indirect
-	golang.org/x/mobile v0.0.0-20230301163155-e0f57694e12c // indirect
-	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	github.com/ulikunitz/xz v0.5.11 // indirect
+	github.com/yuin/goldmark v1.6.0 // indirect
+	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
+	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/image v0.15.0 // indirect
+	golang.org/x/mobile v0.0.0-20240112133503-c713f31d574b // indirect
+	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	honnef.co/go/js/dom v0.0.0-20221001195520-26252dedbe70 // indirect
+	honnef.co/go/js/dom v0.0.0-20231112215516-51f43a291193 // indirect
+)
+
+replace (
+	github.com/go-text/render => github.com/go-text/render v0.0.0-20230619120952-35bccb6164b8
+	github.com/go-text/typesetting => github.com/go-text/typesetting v0.0.0-20230616162802-9c17dd34aa4a
 )

@@ -4,5 +4,5 @@ Website = "https://fruitspace.one"
   Icon = "geometrydash.ico"
   Name = "GhostLauncher"
   ID = "one.fruitspace.ghostlauncher"
-  Version = "0.6"
-  Build = 7
+  Version = "0.9"
+  Build = 40

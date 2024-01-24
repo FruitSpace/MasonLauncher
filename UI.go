@@ -1,6 +1,8 @@
 package main
 
 import (
+	"GhostPatcher/particles"
+	"GhostPatcher/utils"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -8,14 +10,40 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/fyne-io/terminal"
 	"image/color"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 )
+
+type TerminalLayout struct {
+	Size fyne.Size
+}
+
+var installBtn *widget.Button
+
+func NewTerminalLayout(size fyne.Size) *TerminalLayout {
+	return &TerminalLayout{
+		Size: size,
+	}
+}
+
+func (l *TerminalLayout) Layout(objects []fyne.CanvasObject, s fyne.Size) {
+	for _, o := range objects {
+		o.Resize(s)
+		o.Move(fyne.NewPos(0, 0))
+	}
+}
+
+func (l *TerminalLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	return l.Size
+}
 
 func helpScreenDialog(win fyne.Window) {
 	subClr := color.Gray16{Y: 0xaaaf}
@@ -91,9 +119,18 @@ func helpScreenDialog(win fyne.Window) {
 	), win)
 }
 
-func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS Server) fyne.CanvasObject {
-	downBar := widget.NewProgressBar()
-	downBar.Max = 100
+func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS utils.Server) fyne.CanvasObject {
+
+	r, w, _ := os.Pipe()
+
+	os.Stdout = w
+	os.Stderr = w
+
+	t := terminal.New()
+	go func() {
+		t.RunWithConnection(os.Stdin, r)
+		//t.RunLocalShell()
+	}()
 
 	// Make Card --- V(H(img, V(text, text)), btn)
 
@@ -105,11 +142,8 @@ func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS Server) f
 	title := canvas.NewText(GDPS.Name, color.White)
 	title.TextSize = 20
 
-	texturesWarning := canvas.NewText("", color.Gray16{Y: 0xaaaf})
-	if GDPS.TexturePack != "gdps_textures.zip" {
-		texturesWarning = canvas.NewText("Данный GDPS использует текстурпак", color.Gray16{Y: 0xcccf})
-		texturesWarning.TextSize = 12
-	}
+	texturesWarning := canvas.NewText("Используется Particle Engine", color.Gray16{Y: 0xaaaf})
+	texturesWarning.TextSize = 12
 
 	DataCard := container.NewVBox(
 		title,
@@ -120,7 +154,7 @@ func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS Server) f
 	)
 
 	logo := &canvas.Image{}
-	if CacheIcon(GDPS.Icon, "") != nil {
+	if utils.CacheIcon(GDPS.Icon, "") != nil {
 		i, _ := assets.Open("assets/geometrydash.png")
 		logo = canvas.NewImageFromReader(i, "geometrydash.png")
 	} else {
@@ -134,8 +168,9 @@ func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS Server) f
 		DataCard,
 	)
 
-	installBtn := widget.NewButtonWithIcon("Установить", theme.DownloadIcon(), func() {
-		go InstallGD(GDPS, downBar, basePath, pwd, win)
+	installBtn = widget.NewButtonWithIcon("Установить", theme.DownloadIcon(), func() {
+		installBtn.Disable()
+		go InstallGD(GDPS, pwd, win)
 	})
 	helpBtn := widget.NewButtonWithIcon("", theme.HelpIcon(), func() {
 		go helpScreenDialog(win)
@@ -150,225 +185,120 @@ func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS Server) f
 		Card,
 		ActionBox,
 	))
-	return container.NewBorder(copyright, downBar, nil, nil, Pane)
+	tlay := container.New(NewTerminalLayout(fyne.NewSize(800, 160)),
+		container.NewStack(canvas.NewRectangle(color.RGBA{R: 0x19, G: 0x19, B: 0x22, A: 255}), t))
+	return container.NewBorder(copyright, tlay, nil, nil, Pane)
 }
 
-func InstallGD(GDPS Server, progressBar *widget.ProgressBar, basePath, pwd string, w fyne.Window) {
-	progressBar.TextFormatter = func() string {
-		return "Готовим файлы..."
-	}
-	os.MkdirAll(pwd+"/"+GDPS.Name, 0777)
+func InstallGD(GDPS utils.Server, pwd string, w fyne.Window) {
 
-	// Get Sizes and Etags
-	dllSize, dllEtag, err := GetWebFileInfo("https://cdn.fruitspace.one/assets/gdps_dlls.zip")
+	stopper := false
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Println(r)
+		}
+	}()
+
+	p := particles.NewParticle()
+
+	// region Prepare Build Env
+	where := filepath.Join(pwd, GDPS.Name)
+	os.MkdirAll(filepath.Join(where, ".build"), 0777)
+
+	logfile, err := os.Create(filepath.Join(where, ".build", "log.txt"))
 	if err != nil {
-		dialog.ShowConfirm("Ошибка", "Не удалось получить информацию о библиотеках", func(b bool) { os.Exit(1) }, w)
+		dialog.ShowError(err, w)
 		return
 	}
-	LockFile.DllEtag = dllEtag
+	defer logfile.Close()
+	golog := func(s error) {
+		if s != nil {
+			fmt.Fprintln(logfile, s)
+			fmt.Println(s)
+			dialog.ShowError(s, w)
+			stopper = true
+			installBtn.Enable()
+		}
+	}
 
-	texturesSize, texturesEtag, err := GetWebFileInfo("https://cdn.fruitspace.one/assets/gdps_textures.zip")
-	if err != nil {
-		dialog.ShowConfirm("Ошибка", "Не удалось получить информацию о базовых текстурах", func(b bool) { os.Exit(1) }, w)
+	p.InitFolder(filepath.Join(where, ".build"))
+	manifest := p.GenerateMainfestFor(GDPS.SrvId, GDPS.Version)
+	if len(GDPS.Recipe) > 0 {
+		manifest = GDPS.Recipe
+	}
+	golog(os.WriteFile(filepath.Join(where, ".build", "particle.json"), []byte(manifest), 0755))
+	if stopper {
 		return
 	}
-	LockFile.TextureEtag = texturesEtag
+	// endregion
 
-	_, etag, err := GetWebFileInfo("https://cdn.fruitspace.one/assets/GhostLauncher.exe")
+	// Etags
+	_, etag, err := utils.GetWebFileInfo("https://cdn.fruitspace.one/assets/GhostLauncher.exe")
 	if err != nil {
 		dialog.ShowConfirm("Ошибка", "Не удалось получить информацию о лаунчере", func(b bool) { os.Exit(1) }, w)
 		return
 	}
 	LockFile.LauncherEtag = etag
 
-	_, iconEtag, err := GetWebFileInfo(GDPS.Icon)
+	_, iconEtag, err := utils.GetWebFileInfo(GDPS.Icon)
 	if err != nil {
 		dialog.ShowConfirm("Ошибка", "Не удалось получить информацию об иконке", func(b bool) { os.Exit(1) }, w)
 		return
 	}
 	LockFile.IconEtag = iconEtag
 
-	// Download DLLs
-	progressBar.TextFormatter = func() string {
-		return fmt.Sprintf("Загружаем необходимые библиотеки... (%.2f%%)", progressBar.Value)
-	}
-	go UpdateProgress(progressBar, dllSize, basePath+"/gdps_dlls.zip")
-	err = DownloadDefaultDLLs()
-	if err != nil {
-		dialog.ShowConfirm("Ошибка", "Не удалось загрузить библиотеки", func(b bool) { os.Exit(1) }, w)
+	// region Build
+
+	e := p.Prepare(filepath.Join(where, ".build"))
+	if e != nil && strings.HasPrefix(e.Error(), "symlink") {
+		helpPermissionsPage(w)
 		return
 	}
-	time.Sleep(time.Millisecond * 200)
-	progressBar.SetValue(0)
-	DownloadingNow = make(chan int64)
-	fmt.Sprintln("Set 0")
-
-	// Verify Dlls size
-	dllSizeLocal, err := GetFileSize(basePath + "/gdps_dlls.zip")
-	if err != nil || int(dllSizeLocal) != dllSize {
-		os.Remove(basePath + "/gdps_dlls.zip")
-		dialog.ShowConfirm("Ошибка", "Не удалось загрузить библиотеки. Попробуйте еще раз", func(b bool) { os.Exit(1) }, w)
+	golog(e)
+	if stopper {
 		return
 	}
+	logfile.Close()
+	// endregion
 
-	// Download Textures
-	progressBar.TextFormatter = func() string {
-		return fmt.Sprintf("Загружаем базовый текстурпак... (%.2f%%)", progressBar.Value)
-	}
-	go UpdateProgress(progressBar, texturesSize, basePath+"/gdps_textures.zip")
-	err = DownloadDefaultTextures()
-	if err != nil {
-		dialog.ShowConfirm("Ошибка", "Не удалось загрузить базовые текстуры", func(b bool) { os.Exit(1) }, w)
+	golog(p.MoveBuild(where))
+	if stopper {
 		return
 	}
-	time.Sleep(time.Millisecond * 200)
-	progressBar.SetValue(0)
-	DownloadingNow = make(chan int64)
-
-	// Verify Textures size
-	texturesSizeLocal, err := GetFileSize(basePath + "/gdps_textures.zip")
-	if err != nil || int(texturesSizeLocal) != texturesSize {
-		os.Remove(basePath + "/gdps_textures.zip")
-		dialog.ShowConfirm("Ошибка", "Не удалось загрузить базовые текстуры. Попробуйте еще раз", func(b bool) { os.Exit(1) }, w)
-		return
-	}
-
-	if GDPS.TexturePack != "gdps_textures.zip" {
-
-		texturesOverlaySize, texturesOverlayEtag, err := GetWebFileInfo("https://cdn.fruitspace.one/gdps_textures/" + GDPS.TexturePack)
-		if err != nil {
-			dialog.ShowConfirm("Ошибка", "Не удалось получить информацию о GDPS текстурах", func(b bool) { os.Exit(1) }, w)
-			return
-		}
-
-		DialogLock := true
-		dialog.ShowConfirm("Загрузка текстур FruitPack",
-			fmt.Sprintf("%s использует кастомный текстурпак размером %.2fMb. Загрузить?", GDPS.Name, float64(texturesOverlaySize)/1024/1024),
-			func(b bool) {
-				fmt.Println(b)
-				defer func() { DialogLock = false }()
-				if !b {
-					GDPS.TexturePack = "gdps_textures.zip"
-					return
-				}
-
-				//Accept
-				LockFile.TextureOverlayEtag = texturesOverlayEtag
-				progressBar.TextFormatter = func() string {
-					return fmt.Sprintf("Загружаем текстурпак для GDPS... (%.2f%%)", progressBar.Value)
-				}
-				go UpdateProgress(progressBar, texturesSize, basePath+"/"+GDPS.SrvId+"_textures.zip")
-				err = DownloadCustomTextures(GDPS.SrvId, GDPS.TexturePack)
-				if err != nil {
-					dialog.ShowConfirm("Ошибка", "Не удалось загрузить текстуры для GDPS", func(b bool) { os.Exit(1) }, w)
-					return
-				}
-				time.Sleep(time.Millisecond * 200)
-				progressBar.SetValue(0)
-				DownloadingNow = make(chan int64)
-
-				// Verify Textures size
-				texturesOverlaySizeLocal, err := GetFileSize(basePath + "/" + GDPS.SrvId + "_textures.zip")
-				if err != nil || int(texturesOverlaySizeLocal) != texturesOverlaySize {
-					os.Remove(basePath + "/" + GDPS.SrvId + "_textures.zip")
-					dialog.ShowConfirm("Ошибка", "Не удалось загрузить текстуры для GDPS. Попробуйте еще раз", func(b bool) { os.Exit(1) }, w)
-					return
-				}
-			}, w)
-
-		for DialogLock {
-			time.Sleep(time.Millisecond * 100)
-		}
-	}
-
-	// Unpack all
-	progressBar.TextFormatter = func() string { return "Распаковываем файлы..." }
-	progressBar.SetValue(0)
-	err = UnzipFile(basePath+"/gdps_dlls.zip", pwd+"/"+GDPS.Name)
-	if err != nil {
-		dialog.ShowConfirm("Ошибка", "Не удалось распаковать библиотеки", func(b bool) { os.Exit(1) }, w)
-		return
-	}
-	err = UnzipFile(basePath+"/gdps_textures.zip", pwd+"/"+GDPS.Name)
-	if err != nil {
-		dialog.ShowConfirm("Ошибка", "Не удалось распаковать базовые текстуры", func(b bool) { os.Exit(1) }, w)
-		return
-	}
-	if GDPS.TexturePack != "gdps_textures.zip" {
-		err = UnzipFile(basePath+"/"+GDPS.SrvId+"_textures.zip", pwd+"/"+GDPS.Name+"/Resources")
-		if err != nil {
-			dialog.ShowConfirm("Ошибка", "Не удалось распаковать текстуры GDPS", func(b bool) { os.Exit(1) }, w)
-			return
-		}
-	}
-
-	// Download GD
-	progressBar.TextFormatter = func() string { return "Загружаем " + GDPS.Name + "..." }
-	progressBar.SetValue(0)
-	repatch := RePatcher{}
-	gd, err := repatch.DownloadPureGD()
-	if err != nil {
-		dialog.ShowConfirm("Ошибка", "Не удалось загрузить "+GDPS.Name, func(b bool) { os.Exit(1) }, w)
-		return
-	}
-	gd = repatch.PatchPureGD(GDPS.GetUrl(), gd)
-	err = WriteBytes(pwd+"/"+GDPS.Name+"/"+GDPS.Name+".exe", gd)
-	if err != nil {
-		dialog.ShowConfirm("Ошибка", "Не удалось записать "+GDPS.Name, func(b bool) { os.Exit(1) }, w)
-		return
-	}
-	Update(pwd + "/" + GDPS.Name + "/GhostLauncher.exe")
+	utils.Update(pwd + "/" + GDPS.Name + "/GhostLauncher.exe")
 	LockFile.WriteLock(pwd + "/" + GDPS.Name)
-	progressBar.TextFormatter = func() string { return "Готово!" }
-	progressBar.SetValue(0)
 	dialog.ShowConfirm("Установка завершена", GDPS.Name+" успешно установлен. Хотите запустить?", func(b bool) {
 		if b {
-			StartBinaryDetached(pwd + "/" + GDPS.Name + "/" + GDPS.Name + ".exe")
+			utils.StartBinaryDetached(pwd + "/" + GDPS.Name + "/" + GDPS.Name + ".exe")
 			os.Exit(0)
 		}
 	}, w)
-}
-
-func UpdateProgress(progressBar *widget.ProgressBar, size int, target string) {
-	stop := false
-	for {
-		fmt.Printf(".")
-		select {
-		case <-DownloadingNow:
-			stop = true
-		default:
-			val := GetDownloadPercent(size, target)
-			progressBar.SetValue(val)
-		}
-		if stop {
-			break
-		}
-		time.Sleep(time.Millisecond * 100)
-	}
+	installBtn.Enable()
 }
 
 func NewMainPage(win fyne.Window, basePath string, pwd string) fyne.CanvasObject {
 
 	// Check internet connection
-	_, _, inetErr := GetWebFileInfo("https://google.com")
-	GDPS := Server{
+	_, _, inetErr := utils.GetWebFileInfo("https://google.com")
+	GDPS := utils.Server{
 		SrvId: LockFile.SrvId,
 		Name:  LockFile.Title,
 	}
 	desc := "Добро пожаловать!"
 	stat := "Офлайн режим"
-	manager := SaveManager{}
+	manager := utils.SaveManager{}
 	xerr := manager.Open(GDPS.Name)
 	if xerr == nil {
 		uname := manager.GetUname()
 		desc = "Добро пожаловать, " + uname + "!"
 	}
 	if inetErr == nil {
-		GDPS, _ = LoadServerInfo(LockFile.SrvId)
+		GDPS, _ = utils.LoadServerInfo(LockFile.SrvId)
 		stat = fmt.Sprintf("Игроков: %d,   Уровней: %d", GDPS.Players, GDPS.Levels)
-		_, etag, err := GetWebFileInfo("https://cdn.fruitspace.one/assets/GhostLauncher.exe")
+		_, etag, err := utils.GetWebFileInfo("https://cdn.fruitspace.one/assets/GhostLauncher.exe")
 		if err == nil && LockFile.LauncherEtag != etag {
-			SelfUpdate()
+			utils.SelfUpdate()
 			LockFile.LauncherEtag = etag
 			LockFile.WriteLock(pwd)
 			dialog.ShowInformation("Обновление", "Обновление завершено. Перезапустите лаунчер", win)
@@ -387,14 +317,12 @@ func NewMainPage(win fyne.Window, basePath string, pwd string) fyne.CanvasObject
 	xstat.TextSize = 10
 	DataCard := container.NewVBox(
 		title,
-		canvas.NewText(
-			desc,
-			color.White),
+		canvas.NewText(desc, color.White),
 		xstat,
 	)
 
 	logo := &canvas.Image{}
-	if CacheIcon(GDPS.Icon, LockFile.IconEtag) != nil {
+	if utils.CacheIcon(GDPS.Icon, LockFile.IconEtag) != nil {
 		i, _ := assets.Open("assets/geometrydash.png")
 		logo = canvas.NewImageFromReader(i, "geometrydash.png")
 	} else {
@@ -408,11 +336,17 @@ func NewMainPage(win fyne.Window, basePath string, pwd string) fyne.CanvasObject
 		DataCard,
 	)
 
-	installBtn := widget.NewButtonWithIcon("Запустить", theme.MediaPlayIcon(), func() {
-		StartBinaryDetached(pwd + "/" + GDPS.Name + ".exe")
+	runBtn := widget.NewButtonWithIcon("Запустить", theme.MediaPlayIcon(), func() {
+		utils.StartBinaryDetached(pwd + "/" + GDPS.Name + ".exe")
 		os.Exit(0)
 	})
-	Pane := container.NewCenter(container.NewVBox(Card, installBtn))
+	installBtn = widget.NewButtonWithIcon("Переустановить", theme.UploadIcon(), func() {
+		// Get pwd parent folder
+		pwd = filepath.Dir(pwd)
+		installBtn.Disable()
+		go InstallGD(GDPS, pwd, win)
+	})
+	Pane := container.NewCenter(container.NewVBox(Card, runBtn, installBtn))
 	return container.NewBorder(copyright, nil, nil, nil, Pane)
 
 	//_, iconEtag, err:= GetWebFileInfo(GDPS.Icon)
@@ -421,4 +355,31 @@ func NewMainPage(win fyne.Window, basePath string, pwd string) fyne.CanvasObject
 	//	return
 	//}
 	//LockFile.IconEtag=iconEtag
+}
+
+func helpPermissionsPage(win fyne.Window) {
+	logo1 := &canvas.Image{}
+	i1, _ := assets.Open("assets/enable_dev.png")
+	logo1 = canvas.NewImageFromReader(i1, "dev.png")
+	logo1.FillMode = canvas.ImageFillContain
+	logo1.SetMinSize(fyne.NewSize(40*16, 360))
+
+	logo2 := &canvas.Image{}
+	i2, _ := assets.Open("assets/enable_adm.png")
+	logo2 = canvas.NewImageFromReader(i2, "adm.png")
+	logo2.FillMode = canvas.ImageFillContain
+	logo2.SetMinSize(fyne.NewSize(504, 360))
+
+	page := container.NewScroll(container.NewVBox(
+		canvas.NewText("Для Windows 10 и выше, включите режим разработчика в настройках", color.White),
+		canvas.NewText("Где найти: Настройки -> Система -> Для разработчиков", color.White),
+		logo1,
+		canvas.NewText("Для Windows 7 и выше, в настройках совместимости файла отметьте", color.White),
+		canvas.NewText("опцию \"Запуск от имени администратора\"", color.White),
+		logo2,
+		canvas.NewText("Это ограничение Windows для символьных ссылок, а копировать много", color.White),
+		canvas.NewText("раз файлы и засорять диск мы не хотим. Спасибо за понимание", color.White),
+	))
+	page.SetMinSize(fyne.NewSize(40*16, 360))
+	dialog.ShowCustom("Ошибка разрешений", "понятно", page, win)
 }

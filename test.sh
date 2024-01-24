@@ -1,6 +1,2 @@
-go build -ldflags="-s -w" -o GhostLauncher.exe
-rm -f xHydra/GhostLauncher.exe
-cp GhostLauncher.exe xHydra/GhostLauncher.exe
-cd xHydra
+go.exe build -ldflags="-s -w" -o GhostLauncher.exe
 ./GhostLauncher.exe
-cd ..

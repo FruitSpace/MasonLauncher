@@ -2,6 +2,7 @@
 package main
 
 import (
+	"GhostPatcher/utils"
 	"embed"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -14,12 +15,12 @@ import (
 //go:embed assets
 var assets embed.FS
 
-var LockFile = Lock{}
+var LockFile = utils.Lock{}
 
 var (
-	SrvId   = "000S"
-	Version = "0.8"
-	Beta    = false
+	SrvId          = "000S"
+	Version        = "1.0"
+	TwoTwoOverride = false
 )
 
 func main() {
@@ -29,11 +30,11 @@ func main() {
 			SrvId = arg[1]
 		}
 		if len(arg) > 2 {
-			Beta = arg[2] == "beta"
+			TwoTwoOverride = arg[2] == "22"
 		}
 	}
 
-	go UploadMachineStatistics()
+	go utils.UploadMachineStatistics()
 
 	goApp := app.New()
 	goApp.SetIcon(fyne.NewStaticResource("icon.png", GetIcon()))
@@ -47,10 +48,10 @@ func main() {
 	//	w := drv.CreateSplashWindow()
 	//}
 
-	basePath := CreateWorkdir()
+	basePath := utils.CreateWorkdir()
 	pwd, _ := os.Getwd()
 
-	if lock := CheckGDIntegrity(); lock != "" {
+	if lock := utils.CheckGDIntegrity(); lock != "" {
 		// GD is installed
 		err := LockFile.ReadLock(lock)
 		if err != nil {
@@ -60,21 +61,20 @@ func main() {
 		win.SetContent(NewMainPage(win, basePath, pwd))
 	} else {
 		// GD is not installed
-		GDPS, err := LoadServerInfo(SrvId)
+		GDPS, err := utils.LoadServerInfo(SrvId)
 		if err != nil {
 			dialog.ShowConfirm("Ошибка", err.Error(), func(b bool) {
 				GDPS.Name = "Ошибка"
 			}, win)
 			win.ShowAndRun()
 		}
+		if TwoTwoOverride {
+			GDPS.Version = "2.2"
+		}
 		// Server is found
 		LockFile.SrvId = GDPS.SrvId
 		LockFile.Title = GDPS.Name
 		suffix := ""
-		if Beta {
-			GDPS.Region = "no"
-			suffix = " (Beta)"
-		}
 		win.SetTitle("GhostLauncher - Установка " + GDPS.Name + suffix)
 		win.SetContent(NewInstallPage(win, basePath, pwd, GDPS))
 	}
