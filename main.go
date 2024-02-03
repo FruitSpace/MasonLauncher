@@ -19,7 +19,7 @@ var LockFile = utils.Lock{}
 
 var (
 	SrvId          = "000S"
-	Version        = "1.0"
+	Version        = "1.1"
 	TwoTwoOverride = false
 )
 

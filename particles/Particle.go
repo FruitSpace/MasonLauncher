@@ -22,6 +22,7 @@ func NewParticle() *Particle {
 	particle.LayerCache = make(map[string]*particle.Layer)
 	particle.EngineCache = make(map[string]*particle.Engine)
 	particle.MetaCache = make(map[string]string)
+	particle.NUMCPU = 1
 
 	hget.DisplayProgress = false
 

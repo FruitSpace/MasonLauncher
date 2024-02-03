@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	fyne.io/fyne/v2 v2.4.3
-	github.com/fyne-io/terminal v0.0.0-20240118213819-35e2bb2fbc45
+	github.com/fyne-io/terminal v0.0.0-20240128195841-a5b194300d9c
 	github.com/klauspost/cpuid/v2 v2.2.6
-	github.com/m41denx/particle v0.0.0-20240123223616-7e3dc1b65308
+	github.com/m41denx/particle v0.0.0-20240203135137-d12e413f2a78
 	github.com/minio/selfupdate v0.6.0
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	golang.org/x/sys v0.16.0
@@ -38,20 +38,20 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
-	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/klauspost/compress v1.17.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/rivo/uniseg v0.4.6 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
-	github.com/yuin/goldmark v1.6.0 // indirect
+	github.com/yuin/goldmark v1.7.0 // indirect
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/image v0.15.0 // indirect
