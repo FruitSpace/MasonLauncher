@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/m41denx/particle/particle"
-	"github.com/m41denx/particle/utils"
-	"github.com/m41denx/particle/utils/hget"
 	"io"
 	"os"
 	"path/filepath"
@@ -23,10 +21,8 @@ func NewParticle() *Particle {
 	particle.EngineCache = make(map[string]*particle.Engine)
 	particle.MetaCache = make(map[string]string)
 	particle.NUMCPU = 1
+	particle.UseTerminal = false
 
-	hget.DisplayProgress = false
-
-	ldir = utils.PrepareStorage()
 	return &Particle{}
 }
 
@@ -71,7 +67,7 @@ func (p *Particle) Prepare(path string) (err error) {
 	if err != nil {
 		return
 	}
-	p.p.Analyze()
+	p.p.Analyze(false)
 	return
 }
 
