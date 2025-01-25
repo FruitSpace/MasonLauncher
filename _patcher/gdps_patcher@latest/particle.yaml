@@ -1,0 +1,11 @@
+name: fruitspace/gdps_patcher
+meta:
+    author: username
+    note: Short note
+layer:
+    block: ef9849273144faf140ebe34eea651503f05773b7a429daaff76a44afbb1a7096
+recipe:
+    - use: blank
+runnable:
+    build:
+        - run: $MOD/patcher.exe

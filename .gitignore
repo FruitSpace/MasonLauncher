@@ -1,5 +1,7 @@
+build/bin
+node_modules
+frontend/dist
 
-.idea/
-fyne-cross/
-GhostPatcher.exe
-GhostLauncher.exe
+.idea
+.DS_Store
+*.zip
