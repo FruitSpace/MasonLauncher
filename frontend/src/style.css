@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    font-family: "Helvetica Now Text",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    color-scheme: dark;
+}
+
+@font-face {
+    font-family: "Helvetica Now Text";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("assets/fonts/HelveticaNowText-Regular.ttf");
+}
+
+@font-face {
+    font-family: "ITC Avant Garde Std Md";
+    src: url("assets/fonts/ITCAvantGardeStd-Md.ttf");
+}
+
+
+@font-face {
+    font-family: "Helvetica Now Text";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("assets/fonts/HelveticaNowText-Medium.ttf");
+}
+
+@font-face {
+    font-family: "Helvetica Now Text";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("assets/fonts/HelveticaNowText-Bold.ttf");
+}
+
+body, html {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.draggable {
+    --wails-draggable: drag;
+}
