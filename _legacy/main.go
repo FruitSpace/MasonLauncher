@@ -19,7 +19,7 @@ var LockFile = utils.Lock{}
 
 var (
 	SrvId          = "000S"
-	Version        = "1.1"
+	Version        = "1.2"
 	TwoTwoOverride = false
 )
 
@@ -34,7 +34,7 @@ func main() {
 		}
 	}
 
-	go utils.UploadMachineStatistics()
+	//go utils.UploadMachineStatistics()
 
 	goApp := app.New()
 	goApp.SetIcon(fyne.NewStaticResource("icon.png", GetIcon()))

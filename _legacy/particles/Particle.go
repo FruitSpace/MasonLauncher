@@ -3,7 +3,9 @@ package particles
 import (
 	"errors"
 	"fmt"
-	"github.com/m41denx/particle/particle"
+	"github.com/m41denx/particle-engine/pkg"
+	"github.com/m41denx/particle-engine/structs"
+	"github.com/m41denx/particle-engine/utils"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,18 +13,17 @@ import (
 
 var ldir = ""
 
+var homeDir = utils.PrepareStorage()
+
 type Particle struct {
-	p *particle.Particle
 }
 
 func NewParticle() *Particle {
-	particle.ParticleCache = make(map[string]*particle.Particle)
-	particle.LayerCache = make(map[string]*particle.Layer)
-	particle.EngineCache = make(map[string]*particle.Engine)
-	particle.MetaCache = make(map[string]string)
-	particle.NUMCPU = 1
-	particle.UseTerminal = false
-
+	var err error
+	pkg.Config, err = structs.LoadConfig(filepath.Join(homeDir, "config.json"))
+	if err != nil {
+		pkg.Config.SaveTo(filepath.Join(homeDir, "config.json"))
+	}
 	return &Particle{}
 }
 
@@ -31,26 +32,25 @@ func (p *Particle) GenerateMainfestFor(srvid string, version string) string {
 	base := "2.1"
 	if version == "2.2" {
 		apply = "2.2"
-		base = "2.204"
+		base = "2.206"
 	}
 	return fmt.Sprintf(`
-{
-        "name": "%s@1.0",
-        "author": "ghost",
-        "note": "",
-        "block": "",
-        "meta": {
-                "FS_GDPS": "%s",
-                "FS_GDPS_VER": "%s"
-        },
-        "recipe": {
-                "base": "m41den/gdps_windows@%s",
-                "apply": ["m41den/gdps_patcher@%s"],
-                "engines": [],
-                "run": []
-        }
-}
-`, srvid, srvid, version, base, apply)
+name: %s@v1.0
+meta:
+    author: ghost
+    note: autogen
+layer:
+    block: '[sha256 autogen]'
+recipe:
+    - use: fruitspace/gdps_windows@%s
+    - apply: fruitspace/msvc_redist@2010
+    - apply: fruitspace/msvc_redist@2013
+	- apply: fruitspace/gdps_patcher@%s
+	  env:
+	    GDPS_ID: %s
+
+
+`, srvid, version, base, apply, srvid)
 }
 
 func (p *Particle) InitFolder(path string) {
