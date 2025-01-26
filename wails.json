@@ -9,5 +9,14 @@
   "author": {
     "name": "M41den",
     "email": "38406005+m41denx@users.noreply.github.com"
+  },
+  "info": {
+    "protocols": [
+      {
+        "scheme": "mason",
+        "description": "Mason launcher launch protocol",
+        "role": "Editor"
+      }
+    ]
   }
 }

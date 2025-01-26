@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"flag"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 
 	"github.com/wailsapp/wails/v2"
@@ -12,8 +13,11 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+var GDPS_ID string
+
 func init() {
 	PrepareLauncher()
+	flag.StringVar(&GDPS_ID, "gdps", "", "GDPS ID to launch or install")
 }
 
 func main() {
@@ -39,8 +43,11 @@ func main() {
 				UseToolbar:                 false,
 				HideToolbarSeparator:       false,
 			},
+			OnUrlOpen: func(url string) {
+
+			},
 		},
-		DisableResize: true,
+		//DisableResize: true,
 	})
 
 	if err != nil {

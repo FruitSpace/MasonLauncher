@@ -9,8 +9,10 @@ import (
 	"github.com/m41denx/particle-engine/utils"
 	"gopkg.in/yaml.v3"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 var piper, pipew, _ = os.Pipe()
@@ -48,9 +50,9 @@ func (*App) Read() string {
 	return string(buf)
 }
 
-func (*App) Patch(srvid string, version string) string {
-	//os.Stdout = pipew
-	//os.Stderr = pipew
+func (*App) Patch(srvid string, srvname string, version string) string {
+	os.Stdout = pipew
+	os.Stderr = pipew
 
 	ver := "2.204"
 	if version != "2.2" {
@@ -84,7 +86,16 @@ func (*App) Patch(srvid string, version string) string {
 		return err.Error()
 	}
 	ctx.Clean(false)
+	os.Rename(filepath.Join(pc, srvid, "GeometryDash.exe"), filepath.Join(pc, srvid, srvname+".exe"))
 	return ""
+}
+
+func (*App) StartGDPS(srvid string) {
+	path := filepath.Join(pc, srvid, "GeometryDash.exe")
+	bin := exec.Command(path)
+	bin.Dir = path[:strings.LastIndex(path, "/")]
+	bin.Start()
+	bin.Process.Release()
 }
 
 func fsRootDir() string {
