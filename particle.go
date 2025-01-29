@@ -21,18 +21,18 @@ func GetRecipe(version string, patcher string, srvid string) string {
 	return fmt.Sprintf(`
 name: %s_gdps
 meta:
-    author: mason
-	note: "It's a yaml, don't you fucking touch it, idiot"
+  author: mason
+  note: 'Its a yaml, dont you fucking touch it, idiot'
 layer:
-    block: '[sha256 autogen]'
+  block: '[sha256 autogen]'
 recipe:
-    - use: fruitspace/gdps_windows@%s
-    - apply: fruitspace/msvc_redist@2010
-    - apply: fruitspace/msvc_redist@2013
-    - apply: fruitspace/gdps_patcher
-      env:
-          GDPS_ID: %s
-          GDPS_VER: %s
+  - use: fruitspace/gdps_windows@%s
+  - apply: fruitspace/msvc_redist@2010
+  - apply: fruitspace/msvc_redist@2013
+  - apply: fruitspace/gdps_patcher
+    env:
+      GDPS_ID: %s
+      GDPS_VER: %s
 `, srvid, version, srvid, patcher)
 }
 
@@ -69,6 +69,9 @@ func (*App) Patch(srvid string, srvname string, version string) string {
 
 	var manif manifest.Manifest
 	err = yaml.Unmarshal([]byte(recipe), &manif)
+	if err != nil {
+		return err.Error()
+	}
 
 	_ = os.MkdirAll(filepath.Join(pc, srvid), 0750)
 
@@ -90,17 +93,20 @@ func (*App) Patch(srvid string, srvname string, version string) string {
 	return ""
 }
 
-func (*App) StartGDPS(srvid string) {
-	path := filepath.Join(pc, srvid, "GeometryDash.exe")
+func (*App) StartGDPS(srvid string, srvname string) {
+	path := filepath.Join(pc, srvid, srvname+".exe")
 	bin := exec.Command(path)
-	bin.Dir = path[:strings.LastIndex(path, "/")]
-	bin.Start()
+	bin.Dir = path[:strings.LastIndex(path, "\\")]
+	if err := bin.Start(); err != nil {
+		fmt.Println(err)
+		return
+	}
 	bin.Process.Release()
 }
 
 func fsRootDir() string {
 	if runtime.GOOS == "windows" {
-		return os.Getenv("SystemDrive")
+		return os.Getenv("SystemDrive") + "\\"
 	}
 	hen, err := os.UserHomeDir()
 	if err != nil {

@@ -9,4 +9,4 @@ export function Patch(arg1:string,arg2:string,arg3:string):Promise<string>;
 
 export function Read():Promise<string>;
 
-export function StartGDPS(arg1:string):Promise<void>;
+export function StartGDPS(arg1:string,arg2:string):Promise<void>;

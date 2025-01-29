@@ -18,6 +18,6 @@ export function Read() {
   return window['go']['main']['App']['Read']();
 }
 
-export function StartGDPS(arg1) {
-  return window['go']['main']['App']['StartGDPS'](arg1);
+export function StartGDPS(arg1, arg2) {
+  return window['go']['main']['App']['StartGDPS'](arg1, arg2);
 }

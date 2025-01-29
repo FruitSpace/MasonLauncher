@@ -4,7 +4,7 @@ import BannerGD from "./assets/images/BannerGD.png"
 import {GDPS, gdps_get, useInterval} from "./lib/api";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCirclePlay, faPlay, faPlusCircle, faRefresh, faUser} from "@fortawesome/free-solid-svg-icons";
-import {ListServers, Patch, Read} from "../wailsjs/go/main/App";
+import {ListServers, Patch, Read, StartGDPS} from "../wailsjs/go/main/App";
 import AnsiToHtml from "ansi-to-html"
 import clsx from "clsx";
 import {Dialog} from "radix-ui";
@@ -28,6 +28,12 @@ const getServers = async (serverList: string[]) => {
     return mop
 }
 
+const useCache = async <T,>(promise: Promise<T>, deltas: string[]): Promise<T> => {
+    const data = await promise
+
+}
+
+
 function App() {
     const [clearance, setClearance] = useState<boolean>(false)
     const [srv, setSrv] = useState<GDPS>()
@@ -43,6 +49,7 @@ function App() {
         ListServers().then(v => {
             setServerList(v)
             srvid || setSrvid(v[0])
+            getServers(v).then(v2 => setServersinfo(v2))
         })
     }, []);
 
@@ -67,7 +74,7 @@ function App() {
             <div className="flex h-screen">
                 <div className="h-full w-1/3 border-r-1 border-white border-opacity-25 p-4 pt-8 flex flex-col gap-4">
                     <p className="mx-auto text-gray-300 text-sm">Установленные серверы</p>
-                    <div className="flex flex-col gap-4 overflow-y-scroll">
+                    <div className="flex flex-col gap-4 overflow-y-scroll no-scrollbar">
                         {serversInfo.map(srv => {
                             return <div
                                 className={clsx("flex items-center gap-2 rounded-xl border-1 border-white border-opacity-25 cursor-pointer", srvid == srv.srvid && "bg-white bg-opacity-25")}
@@ -96,7 +103,7 @@ function App() {
                         <div
                             className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-sidebar"></div>
                     </div>
-                    <div className="flex flex-col relative z-50 mx-8 -mt-20 bg-black bg-opacity-75 rounded-xl">
+                    <div className="flex flex-col relative z-50 mx-8 -mt-28 bg-black bg-opacity-75 rounded-xl">
                         <div
                             className=" flex gap-4 bg-sidebar border-white border-1 border-opacity-25 rounded-xl p-4">
                             <img src={srv?.icon} className="aspect-square w-24 rounded-lg"/>
@@ -115,7 +122,7 @@ function App() {
                                 </p>
                             </div>
                         </div>
-                        <div className="p-4 max-h-28 overflow-x-scroll overflow-y-scroll w-full">
+                        <div className="flex flex-col-reverse p-4 max-h-28 overflow-x-hidden overflow-y-auto no-scrollbar w-full">
                             <Log/>
                         </div>
                     </div>
@@ -124,7 +131,7 @@ function App() {
                            className={clsx(
                                "cursor-pointer px-4 py-2 bg-primary hover:bg-primary/80 rounded-lg flex-1 flex gap-2 items-center justify-center",
                                lockedState && "opacity-50 !cursor-default"
-                           )}>
+                           )} onClick={()=>srv&&StartGDPS(srv.srvid, srv.srv_name)}>
                             <FontAwesomeIcon icon={faPlay}/> Запустить
                         </a>
                         <a href="#"
@@ -150,7 +157,10 @@ function App() {
                 setSrvid(srvidToInstall)
                 setSrv(data)
                 setLockedState(true)
-                await Patch(data.srvid, data.srv_name, data.version).then(v => setLockedState(false))
+                await Patch(data.srvid, data.srv_name, data.version).then(v => {
+                    setLockedState(false)
+                    console.log(v)
+                })
             }}>
                 <div className="flex justify-center">
                     <input placeholder="ID Сервера: XXXX"
