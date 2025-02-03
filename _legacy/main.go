@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -19,7 +20,7 @@ var LockFile = utils.Lock{}
 
 var (
 	SrvId          = "000S"
-	Version        = "1.2"
+	Version        = "1.3"
 	TwoTwoOverride = false
 )
 
@@ -31,6 +32,12 @@ func main() {
 		}
 		if len(arg) > 2 {
 			TwoTwoOverride = arg[2] == "22"
+		}
+	} else {
+		binname := filepath.Base(os.Args[0])
+		bins := strings.Split(binname, "_")
+		if len(bins) > 1 && len(bins[0]) == 4 {
+			SrvId = bins[0]
 		}
 	}
 

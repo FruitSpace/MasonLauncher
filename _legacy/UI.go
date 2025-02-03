@@ -3,6 +3,7 @@ package main
 import (
 	"GhostPatcher/particles"
 	"GhostPatcher/utils"
+	"errors"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -192,45 +193,14 @@ func NewInstallPage(win fyne.Window, basePath string, pwd string, GDPS utils.Ser
 
 func InstallGD(GDPS utils.Server, pwd string, w fyne.Window) {
 
-	stopper := false
-
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println(r)
 		}
 	}()
 
-	p := particles.NewParticle()
-
 	// region Prepare Build Env
 	where := filepath.Join(pwd, GDPS.Name)
-	os.MkdirAll(filepath.Join(where, ".build"), 0777)
-
-	logfile, err := os.Create(filepath.Join(where, ".build", "log.txt"))
-	if err != nil {
-		dialog.ShowError(err, w)
-		return
-	}
-	defer logfile.Close()
-	golog := func(s error) {
-		if s != nil {
-			fmt.Fprintln(logfile, s)
-			fmt.Println(s)
-			dialog.ShowError(s, w)
-			stopper = true
-			installBtn.Enable()
-		}
-	}
-
-	p.InitFolder(filepath.Join(where, ".build"))
-	manifest := p.GenerateMainfestFor(GDPS.SrvId, GDPS.Version)
-	if len(GDPS.Recipe) > 0 {
-		manifest = GDPS.Recipe
-	}
-	golog(os.WriteFile(filepath.Join(where, ".build", "particle.json"), []byte(manifest), 0755))
-	if stopper {
-		return
-	}
 	// endregion
 
 	// Etags
@@ -250,27 +220,20 @@ func InstallGD(GDPS utils.Server, pwd string, w fyne.Window) {
 
 	// region Build
 
-	e := p.Prepare(filepath.Join(where, ".build"))
-	if e != nil && strings.HasPrefix(e.Error(), "symlink") {
-		helpPermissionsPage(w)
+	errorString := particles.Patch(GDPS.SrvId, GDPS.Name, GDPS.Version, where)
+
+	if errorString != "" {
+		dialog.ShowError(errors.New(errorString), w)
+		installBtn.Enable()
 		return
 	}
-	golog(e)
-	if stopper {
-		return
-	}
-	logfile.Close()
 	// endregion
 
-	golog(p.MoveBuild(where))
-	if stopper {
-		return
-	}
-	utils.Update(pwd + "/" + GDPS.Name + "/GhostLauncher.exe")
-	LockFile.WriteLock(pwd + "/" + GDPS.Name)
+	utils.Update(filepath.Join(where, "GhostLauncher.exe"))
+	LockFile.WriteLock(where)
 	dialog.ShowConfirm("Установка завершена", GDPS.Name+" успешно установлен. Хотите запустить?", func(b bool) {
 		if b {
-			utils.StartBinaryDetached(pwd + "/" + GDPS.Name + "/" + GDPS.Name + ".exe")
+			utils.StartBinaryDetached(filepath.Join(where, GDPS.Name+".exe"))
 			os.Exit(0)
 		}
 	}, w)
@@ -355,31 +318,4 @@ func NewMainPage(win fyne.Window, basePath string, pwd string) fyne.CanvasObject
 	//	return
 	//}
 	//LockFile.IconEtag=iconEtag
-}
-
-func helpPermissionsPage(win fyne.Window) {
-	logo1 := &canvas.Image{}
-	i1, _ := assets.Open("assets/enable_dev.png")
-	logo1 = canvas.NewImageFromReader(i1, "dev.png")
-	logo1.FillMode = canvas.ImageFillContain
-	logo1.SetMinSize(fyne.NewSize(40*16, 360))
-
-	logo2 := &canvas.Image{}
-	i2, _ := assets.Open("assets/enable_adm.png")
-	logo2 = canvas.NewImageFromReader(i2, "adm.png")
-	logo2.FillMode = canvas.ImageFillContain
-	logo2.SetMinSize(fyne.NewSize(504, 360))
-
-	page := container.NewScroll(container.NewVBox(
-		canvas.NewText("Для Windows 10 и выше, включите режим разработчика в настройках", color.White),
-		canvas.NewText("Где найти: Настройки -> Система -> Для разработчиков", color.White),
-		logo1,
-		canvas.NewText("Для Windows 7 и выше, в настройках совместимости файла отметьте", color.White),
-		canvas.NewText("опцию \"Запуск от имени администратора\"", color.White),
-		logo2,
-		canvas.NewText("Это ограничение Windows для символьных ссылок, а копировать много", color.White),
-		canvas.NewText("раз файлы и засорять диск мы не хотим. Спасибо за понимание", color.White),
-	))
-	page.SetMinSize(fyne.NewSize(40*16, 360))
-	dialog.ShowCustom("Ошибка разрешений", "понятно", page, win)
 }
